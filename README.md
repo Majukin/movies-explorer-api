@@ -6,4 +6,4 @@
 Ссылки на проект
 IP-адрес 51.250.90.59
 
-Backend 
+Backend https://api.movies.practicum.nomoredomains.monster
