@@ -11,6 +11,7 @@ module.exports.getMovies = (req, res, next) => {
 
 module.exports.createMovie = (req, res, next) => {
   const {
+    movieId,
     country,
     director,
     duration,
@@ -19,12 +20,12 @@ module.exports.createMovie = (req, res, next) => {
     image,
     trailerLink,
     thumbnail,
-    movieId,
     nameRU,
     nameEN,
   } = req.body;
   const owner = req.user._id;
   Movie.create({
+    movieId,
     country,
     director,
     duration,
@@ -34,7 +35,6 @@ module.exports.createMovie = (req, res, next) => {
     image,
     trailerLink,
     thumbnail,
-    movieId,
     nameRU,
     nameEN,
   })
