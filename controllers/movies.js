@@ -3,6 +3,12 @@ const NotFoundError = require('../errors/NotFoundError');
 const ForbiddenError = require('../errors/ForbiddenError');
 const ValidationError = require('../errors/ValidationError');
 
+module.exports.getMovies = (req, res, next) => {
+  Movie.find({ owner: req.user._id })
+    .then((movies) => res.send(movies))
+    .catch(next);
+};
+
 module.exports.createMovie = (req, res, next) => {
   const {
     movieId,
@@ -17,7 +23,7 @@ module.exports.createMovie = (req, res, next) => {
     nameRU,
     nameEN,
   } = req.body;
-  const { _id } = req.user;
+  const owner = req.user._id;
   Movie.create({
     movieId,
     country,
@@ -25,14 +31,14 @@ module.exports.createMovie = (req, res, next) => {
     duration,
     year,
     description,
-    owner: _id,
+    owner,
     image,
     trailerLink,
     thumbnail,
     nameRU,
     nameEN,
   })
-    .then(() => res.status(201).send({ message: 'Фильм сохранен' }))
+    .then((movie) => res.send(movie))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new ValidationError('Некорректные данные при создании фильма'));
@@ -42,28 +48,15 @@ module.exports.createMovie = (req, res, next) => {
     });
 };
 
-module.exports.getMovies = (req, res, next) => {
-  const { _id } = req.user;
-  Movie.find({ owner: _id }).populate('owner', '_id')
-    .then((movies) => res.send(movies))
-    .catch(next);
-};
-
 module.exports.deleteMovie = (req, res, next) => {
-  const { id: movieId } = req.params;
-  const { _id: userId } = req.user;
-
-  Movie.findById(movieId)
+  Movie.findById(req.params._id)
     .then((movie) => {
-      if (!movie) next(new NotFoundError('Фильм не найден'));
-
-      const { owner: movieOwnerId } = movie;
-      if (movieOwnerId.valueOf() !== userId) {
-        next(new ForbiddenError('Попытка удалить фильм другого пользователя'));
+      if (!movie) throw next(new NotFoundError('Фильм не найден'));
+      if (req.user._id === movie.owner.toString()) {
+        return movie.deleteOne();
       }
-      movie.deleteOne()
-        .then(() => res.status(201).send({ message: 'Фильм удален' }))
-        .catch(next);
+      throw next(new ForbiddenError('Попытка удалить фильм другого пользователя'));
     })
+    .then((movie) => res.send(movie))
     .catch(next);
 };
